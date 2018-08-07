@@ -6,6 +6,8 @@ repository = "https://github.com/otterandrye/mailgun_v3"
 license = "MIT"
 version = "0.1.0"
 authors = ["Nathan Merritt <nathan@gnmerritt.net>"]
+keywords = ["mailgun", "reqwest", "email", "api"]
+categories = ["api-bindings"]
 
 [badges]
 travis-ci = { repository = "otterandrye/mailgun_v3", branch = "master" }
