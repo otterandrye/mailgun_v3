@@ -46,12 +46,12 @@ impl MessageBody {
 
 #[derive(Default)]
 pub struct Message {
-    to: Vec<EmailAddress>,
-    cc: Vec<EmailAddress>,
-    bcc: Vec<EmailAddress>,
-    subject: String,
-    body: MessageBody,
-    options: Vec<SendOptions>,
+    pub to: Vec<EmailAddress>,
+    pub cc: Vec<EmailAddress>,
+    pub bcc: Vec<EmailAddress>,
+    pub subject: String,
+    pub body: MessageBody,
+    pub options: Vec<SendOptions>,
 }
 
 impl Message {
@@ -107,8 +107,8 @@ impl SendOptions {
 
 #[derive(Deserialize, Debug, PartialEq)]
 pub struct SendResponse {
-    message: String,
-    id: String,
+    pub message: String,
+    pub id: String,
 }
 
 const MAILGUN_API: &str = "https://api.mailgun.net/v3";
