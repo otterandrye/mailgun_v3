@@ -1,7 +1,14 @@
 [package]
 name = "mailgun_v3"
+description = "reqwest based web bindings for Mailgun's v3 JSON API"
+readme = "README.md"
+repository = "https://github.com/otterandrye/mailgun_v3"
+license = "MIT"
 version = "0.1.0"
 authors = ["Nathan Merritt <nathan@gnmerritt.net>"]
+
+[badges]
+travis-ci = { repository = "otterandrye/mailgun_v3", branch = "master" }
 
 [dependencies]
 chrono = "0.4.5"
