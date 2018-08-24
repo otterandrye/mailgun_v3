@@ -215,4 +215,27 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().status(), Some(StatusCode::Unauthorized));
     }
+
+    #[ignore]
+    #[test]
+    fn actually_send_email() {
+        // if you want to try actually sending an email w/ your credentials add them to this test
+        // and run it.
+        let domain = "sandbox-some_numbers_here_probably.mailgun.org";
+        let key = "something-secret-something-safe";
+        let recipient = "foo@bar.com";
+
+        let creds = Credentials::new(&key, &domain);
+        let recipient = EmailAddress::address(&recipient);
+        let message = Message {
+            to: vec![recipient],
+            subject: "Test email".to_string(),
+            body: MessageBody::Text(String::from("This email is from an mailgun_v3 automated test")),
+            ..Default::default()
+        };
+        let sender = EmailAddress::name_address("Nick Testla", &format!("mailgun_v3@{}", &domain));
+
+        let res = send_email(&creds, &sender, message);
+        assert!(res.is_ok(), format!("{:?}", &res));
+    }
 }
