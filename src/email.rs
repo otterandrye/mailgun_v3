@@ -74,11 +74,13 @@ impl Message {
     }
 
     fn add_recipients(field: &str, addresses: Vec<EmailAddress>, params: &mut HashMap<String, String>) {
-        let joined = addresses.iter()
-            .map(EmailAddress::to_string)
-            .collect::<Vec<String>>()
-            .join(",");
-        params.insert(field.to_owned(), joined);
+        if !addresses.is_empty() {
+            let joined = addresses.iter()
+                .map(EmailAddress::to_string)
+                .collect::<Vec<String>>()
+                .join(",");
+            params.insert(field.to_owned(), joined);
+        }
     }
 }
 
