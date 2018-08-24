@@ -178,6 +178,7 @@ mod tests {
         let params = msg.to_params();
         assert_eq!(params.get("to"), Some(&String::from("foo@bar.com")));
         assert_eq!(params.get("cc"), Some(&String::from("Tim <woo@woah.com>,z@c.c")));
+        assert_eq!(params.get("bcc"), None);
     }
 
     #[test]
