@@ -1,31 +1,13 @@
+//! Send email through Mailgun
+
 use chrono::prelude::*;
 use reqwest;
 use std::collections::HashMap;
 
-use ::{Credentials, MailgunResult};
+use ::{Credentials, MailgunResult, MAILGUN_API};
+pub use ::EmailAddress;
 
-pub struct EmailAddress {
-    name: Option<String>,
-    address: String,
-}
-
-impl EmailAddress {
-    pub fn address(address: &str) -> Self {
-        EmailAddress { name: None, address: address.to_string() }
-    }
-
-    pub fn name_address(name: &str, address: &str ) -> Self {
-        EmailAddress { name: Some(name.to_string()), address: address.to_string() }
-    }
-
-    pub fn to_string(&self) -> String {
-        match self.name {
-            Some(ref name) => format!("{} <{}>", name, self.address),
-            None => self.address.clone()
-        }
-    }
-}
-
+///! `Html` and `Text` emails use different API params
 pub enum MessageBody {
     Html(String),
     Text(String),
@@ -44,6 +26,7 @@ impl MessageBody {
     }
 }
 
+///! An email to send through Mailgun. Won't send without a body
 #[derive(Default)]
 pub struct Message {
     pub to: Vec<EmailAddress>,
@@ -84,6 +67,7 @@ impl Message {
     }
 }
 
+///! Some of the parameters exposed by the mailgun send API
 pub enum SendOptions {
     TestMode, // o:testmode
     DeliveryTime(DateTime<Utc>), // o:deliverytime
@@ -113,7 +97,6 @@ pub struct SendResponse {
     pub id: String,
 }
 
-const MAILGUN_API: &str = "https://api.mailgun.net/v3";
 const MESSAGES_ENDPOINT: &str = "messages";
 
 // curl -s --user 'api:YOUR_API_KEY' \
@@ -123,7 +106,8 @@ const MESSAGES_ENDPOINT: &str = "messages";
 //     -F to=bar@example.com \
 //     -F subject='Hello' \
 //     -F text='Testing some Mailgun awesomeness!'
-/// https://documentation.mailgun.com/en/latest/api-sending.html#sending
+/// Sends a single email from the specified sender address
+/// [API docs](https://documentation.mailgun.com/en/latest/api-sending.html#sending)
 pub fn send_email(creds: &Credentials, sender: &EmailAddress, msg: Message) ->  MailgunResult<SendResponse> {
     let client = reqwest::Client::new();
     send_with_client(&client, creds, sender, msg)

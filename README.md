@@ -5,6 +5,9 @@
 
 reqwest based web bindings for [Mailgun's v3 JSON API](https://documentation.mailgun.com/en/latest/api_reference.html)
 
+https://docs.rs/mailgun_v3/latest/mailgun_v3/
+
 ## currently implemented
 
   - email send
+  - email validation
