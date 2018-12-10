@@ -198,7 +198,7 @@ mod tests {
 
         let res = send_email(&creds, &sender, message);
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err().status(), Some(StatusCode::Unauthorized));
+        assert_eq!(res.unwrap_err().status(), Some(StatusCode::UNAUTHORIZED));
     }
 
     #[ignore]
