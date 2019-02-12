@@ -11,6 +11,7 @@ pub use ::EmailAddress;
 pub enum MessageBody {
     Html(String),
     Text(String),
+    HtmlAndText(String, String),
 }
 
 impl Default for MessageBody {
@@ -22,6 +23,10 @@ impl MessageBody {
         match self {
             MessageBody::Html(c) => params.insert(String::from("html"), c),
             MessageBody::Text(c) => params.insert(String::from("text"), c),
+            MessageBody::HtmlAndText(html, text) => {
+                params.insert(String::from("html"), html);
+                params.insert(String::from("text"), text)
+            },
         };
     }
 }
@@ -149,6 +154,14 @@ mod tests {
         };
         let params = html.to_params();
         assert_eq!(params.get("html"), Some(&String::from("<body>hello, world</body>")));
+
+        let both = Message {
+            body: MessageBody::HtmlAndText(String::from("<body/>"), String::from("hello")),
+            ..Default::default()
+        };
+        let params = both.to_params();
+        assert_eq!(params.get("html"), Some(&String::from("<body/>")));
+        assert_eq!(params.get("text"), Some(&String::from("hello")));
     }
 
     #[test]
