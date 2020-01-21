@@ -8,6 +8,7 @@ version = "0.6.0"
 authors = ["Nathan Merritt <nathan@gnmerritt.net>"]
 keywords = ["mailgun", "reqwest", "email", "api"]
 categories = ["api-bindings"]
+edition = "2018"
 
 [badges]
 travis-ci = { repository = "otterandrye/mailgun_v3", branch = "master" }
