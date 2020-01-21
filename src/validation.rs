@@ -3,7 +3,7 @@
 use reqwest;
 use std::collections::HashMap;
 
-use ::{Credentials, MailgunResult, MAILGUN_API};
+use crate::{Credentials, MailgunResult, MAILGUN_API};
 
 ///! Returned for sucessfully parsed email addresses
 #[derive(Deserialize, Debug)]

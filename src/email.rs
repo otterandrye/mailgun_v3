@@ -4,8 +4,8 @@ use chrono::prelude::*;
 use reqwest;
 use std::collections::HashMap;
 
-use ::{Credentials, MailgunResult, MAILGUN_API};
-pub use ::EmailAddress;
+use crate::{Credentials, MailgunResult, MAILGUN_API};
+pub use crate::EmailAddress;
 
 ///! `Html` and `Text` emails use different API params
 pub enum MessageBody {
