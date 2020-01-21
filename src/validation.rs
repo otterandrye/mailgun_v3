@@ -32,17 +32,17 @@ const VALIDATION_ENDPOINT: &str = "address/private/validate";
 /// Validate an email using mailgun's validation service
 /// [API docs](https://documentation.mailgun.com/en/latest/api-email-validation.html#email-validation)
 pub fn validate_email(creds: &Credentials, address: &str) -> MailgunResult<ValidationResponse> {
-    let client = reqwest::Client::new();
+    let client = reqwest::blocking::Client::new();
     validate_email_with_client(&client, creds, address)
 }
 
 /// Same as `validate_email` but with an externally managed client
-pub fn validate_email_with_client(client: &reqwest::Client, creds: &Credentials, address: &str) -> MailgunResult<ValidationResponse> {
+pub fn validate_email_with_client(client: &reqwest::blocking::Client, creds: &Credentials, address: &str) -> MailgunResult<ValidationResponse> {
     let url = format!("{}/{}", MAILGUN_API, VALIDATION_ENDPOINT);
     let mut params = HashMap::new();
     params.insert("address".to_string(), address);
 
-    let mut res = client.get(&url)
+    let res = client.get(&url)
         .basic_auth("api", Some(creds.api_key.clone()))
         .form(&params)
         .send()?

@@ -114,17 +114,17 @@ const MESSAGES_ENDPOINT: &str = "messages";
 /// Sends a single email from the specified sender address
 /// [API docs](https://documentation.mailgun.com/en/latest/api-sending.html#sending)
 pub fn send_email(creds: &Credentials, sender: &EmailAddress, msg: Message) ->  MailgunResult<SendResponse> {
-    let client = reqwest::Client::new();
+    let client = reqwest::blocking::Client::new();
     send_with_client(&client, creds, sender, msg)
 }
 
 /// Same as `send_email` but with an externally managed client
-pub fn send_with_client(client: &reqwest::Client, creds: &Credentials, sender: &EmailAddress, msg: Message) -> MailgunResult<SendResponse> {
+pub fn send_with_client(client: &reqwest::blocking::Client, creds: &Credentials, sender: &EmailAddress, msg: Message) -> MailgunResult<SendResponse> {
     let mut params = msg.to_params();
     params.insert("from".to_string(), sender.to_string());
     let url = format!("{}/{}/{}", MAILGUN_API, creds.domain, MESSAGES_ENDPOINT);
 
-    let mut res = client.post(&url)
+    let res = client.post(&url)
         .basic_auth("api", Some(creds.api_key.clone()))
         .form(&params)
         .send()?
