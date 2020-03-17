@@ -281,3 +281,123 @@ mod tests {
         assert!(res.is_ok(), format!("{:?}", &res));
     }
 }
+
+pub mod async_impl {
+    use super::*;
+
+    /// Sends a single email from the specified sender address
+    /// [API docs](https://documentation.mailgun.com/en/latest/api-sending.html#sending)
+    pub async fn send_email(
+        creds: &Credentials,
+        sender: &EmailAddress,
+        msg: Message,
+    ) -> MailgunResult<SendResponse> {
+        let client = reqwest::Client::new();
+        send_with_client(&client, creds, sender, msg).await
+    }
+
+    /// Same as `send_email` but with an externally managed client
+    pub async fn send_with_client(
+        client: &reqwest::Client,
+        creds: &Credentials,
+        sender: &EmailAddress,
+        msg: Message,
+    ) -> MailgunResult<SendResponse> {
+        let url = format!("{}/{}/{}", MAILGUN_API, creds.domain, MESSAGES_ENDPOINT);
+        let request_builder = client.post(&url);
+        send_with_request_builder(request_builder, creds, sender, msg).await
+    }
+
+    /// Same as `send_email` but with an externally managed request builder.
+    /// Use this in case you want to send the mails to a custom API endpoint, e.g. for testing.
+    pub async fn send_with_request_builder(
+        request_builder: reqwest::RequestBuilder,
+        creds: &Credentials,
+        sender: &EmailAddress,
+        msg: Message,
+    ) -> MailgunResult<SendResponse> {
+        let mut params = msg.to_params();
+        params.insert("from".to_string(), sender.to_string());
+
+        let res = request_builder
+            .basic_auth("api", Some(creds.api_key.clone()))
+            .form(&params)
+            .send()
+            .await?
+            .error_for_status()?;
+
+        let parsed: SendResponse = res.json().await?;
+        Ok(parsed)
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use serde_json::json;
+
+        #[ignore]
+        #[tokio::test]
+        async fn actually_send_email() {
+            // if you want to try actually sending an email w/ your credentials add them to this test
+            // and run it.
+            let domain = "sandbox-some_numbers_here_probably.mailgun.org";
+            let key = "something-secret-something-safe";
+            let recipient = "foo@bar.com";
+
+            let creds = Credentials::new(&key, &domain);
+            let recipient = EmailAddress::address(&recipient);
+            let message = Message {
+                to: vec![recipient],
+                subject: "Test email".to_string(),
+                body: MessageBody::Text(String::from(
+                    "This email is from an mailgun_v3 automated test",
+                )),
+                ..Default::default()
+            };
+            let sender =
+                EmailAddress::name_address("Nick Testla", &format!("mailgun_v3@{}", &domain));
+
+            let res = send_email(&creds, &sender, message).await;
+            assert!(res.is_ok(), format!("{:?}", &res));
+        }
+
+        #[tokio::test]
+        async fn test_send_with_request_builder() {
+            let domain = "sandbox0123456789abcdef0123456789abcdef.mailgun.org";
+            let key = "0123456789abcdef0123456789abcdef-01234567-89abcdef";
+            let recipient = "user@example.com";
+
+            let creds = Credentials::new(&key, &domain);
+            let recipient = EmailAddress::address(&recipient);
+            let message = Message {
+                to: vec![recipient],
+                subject: "Test email".to_string(),
+                body: MessageBody::Text(String::from(
+                    "This email is from an mailgun_v3 automated test",
+                )),
+                ..Default::default()
+            };
+            let sender =
+                EmailAddress::name_address("Nick Testla", &format!("mailgun_v3@{}", &domain));
+
+            let domain = &mockito::server_url();
+            let uri = format!("/{}/{}", creds.domain, MESSAGES_ENDPOINT);
+
+            let response = json!({
+                "id": "<0123456789abcdef.0123456789abcdef@sandbox0123456789abcdef0123456789abcdef.mailgun.org>",
+                "message": "Queued. Thank you."
+            });
+            let _m = mockito::mock("POST", uri.as_str())
+                .with_status(200)
+                .with_header("content-type", "application/json")
+                .with_body(response.to_string())
+                .create();
+
+            let url = format!("{}{}", domain, uri);
+            let client = reqwest::Client::new();
+            let request_builder = client.post(&url);
+            let res = send_with_request_builder(request_builder, &creds, &sender, message).await;
+            assert!(res.is_ok(), format!("{:?}", &res));
+        }
+    }
+}
