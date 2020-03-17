@@ -280,40 +280,60 @@ mod tests {
         let res = send_with_request_builder(request_builder, &creds, &sender, message);
         assert!(res.is_ok(), format!("{:?}", &res));
     }
+}
 
-    pub mod async_impl {
+pub mod async_impl {
+    use super::*;
+
+    /// Sends a single email from the specified sender address
+    /// [API docs](https://documentation.mailgun.com/en/latest/api-sending.html#sending)
+    pub async fn send_email(
+        creds: &Credentials,
+        sender: &EmailAddress,
+        msg: Message,
+    ) -> MailgunResult<SendResponse> {
+        let client = reqwest::Client::new();
+        send_with_client(&client, creds, sender, msg).await
+    }
+
+    /// Same as `send_email` but with an externally managed client
+    pub async fn send_with_client(
+        client: &reqwest::Client,
+        creds: &Credentials,
+        sender: &EmailAddress,
+        msg: Message,
+    ) -> MailgunResult<SendResponse> {
+        let url = format!("{}/{}/{}", MAILGUN_API, creds.domain, MESSAGES_ENDPOINT);
+        let request_builder = client.post(&url);
+        send_with_request_builder(request_builder, creds, sender, msg).await
+    }
+
+    /// Same as `send_email` but with an externally managed request builder.
+    /// Use this in case you want to send the mails to a custom API endpoint, e.g. for testing.
+    pub async fn send_with_request_builder(
+        request_builder: reqwest::RequestBuilder,
+        creds: &Credentials,
+        sender: &EmailAddress,
+        msg: Message,
+    ) -> MailgunResult<SendResponse> {
+        let mut params = msg.to_params();
+        params.insert("from".to_string(), sender.to_string());
+
+        let res = request_builder
+            .basic_auth("api", Some(creds.api_key.clone()))
+            .form(&params)
+            .send()
+            .await?
+            .error_for_status()?;
+
+        let parsed: SendResponse = res.json().await?;
+        Ok(parsed)
+    }
+
+    #[cfg(test)]
+    mod tests {
         use super::*;
-
-        /// Sends a single email from the specified sender address
-        /// [API docs](https://documentation.mailgun.com/en/latest/api-sending.html#sending)
-        pub async fn send_email(creds: &Credentials, sender: &EmailAddress, msg: Message) ->  MailgunResult<SendResponse> {
-            let client = reqwest::Client::new();
-            send_with_client(&client, creds, sender, msg).await
-        }
-
-        /// Same as `send_email` but with an externally managed client
-        pub async fn send_with_client(client: &reqwest::Client, creds: &Credentials, sender: &EmailAddress, msg: Message) -> MailgunResult<SendResponse> {
-            let url = format!("{}/{}/{}", MAILGUN_API, creds.domain, MESSAGES_ENDPOINT);
-            let request_builder = client.post(&url);
-            send_with_request_builder(request_builder, creds, sender, msg).await
-        }
-
-        /// Same as `send_email` but with an externally managed request builder.
-        /// Use this in case you want to send the mails to a custom API endpoint, e.g. for testing.
-        pub async fn send_with_request_builder(request_builder: reqwest::RequestBuilder, creds: &Credentials, sender: &EmailAddress, msg: Message) -> MailgunResult<SendResponse> {
-            let mut params = msg.to_params();
-            params.insert("from".to_string(), sender.to_string());
-
-            let res = request_builder
-                .basic_auth("api", Some(creds.api_key.clone()))
-                .form(&params)
-                .send()
-                .await?
-                .error_for_status()?;
-
-            let parsed: SendResponse = res.json().await?;
-            Ok(parsed)
-        }
+        use serde_json::json;
 
         #[ignore]
         #[tokio::test]
@@ -329,10 +349,13 @@ mod tests {
             let message = Message {
                 to: vec![recipient],
                 subject: "Test email".to_string(),
-                body: MessageBody::Text(String::from("This email is from an mailgun_v3 automated test")),
+                body: MessageBody::Text(String::from(
+                    "This email is from an mailgun_v3 automated test",
+                )),
                 ..Default::default()
             };
-            let sender = EmailAddress::name_address("Nick Testla", &format!("mailgun_v3@{}", &domain));
+            let sender =
+                EmailAddress::name_address("Nick Testla", &format!("mailgun_v3@{}", &domain));
 
             let res = send_email(&creds, &sender, message).await;
             assert!(res.is_ok(), format!("{:?}", &res));
@@ -349,10 +372,13 @@ mod tests {
             let message = Message {
                 to: vec![recipient],
                 subject: "Test email".to_string(),
-                body: MessageBody::Text(String::from("This email is from an mailgun_v3 automated test")),
+                body: MessageBody::Text(String::from(
+                    "This email is from an mailgun_v3 automated test",
+                )),
                 ..Default::default()
             };
-            let sender = EmailAddress::name_address("Nick Testla", &format!("mailgun_v3@{}", &domain));
+            let sender =
+                EmailAddress::name_address("Nick Testla", &format!("mailgun_v3@{}", &domain));
 
             let domain = &mockito::server_url();
             let uri = format!("/{}/{}", creds.domain, MESSAGES_ENDPOINT);
