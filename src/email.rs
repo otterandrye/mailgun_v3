@@ -358,9 +358,9 @@ mod tests {
             let uri = format!("/{}/{}", creds.domain, MESSAGES_ENDPOINT);
 
             let response = json!({
-            "id": "<0123456789abcdef.0123456789abcdef@sandbox0123456789abcdef0123456789abcdef.mailgun.org>",
-            "message": "Queued. Thank you."
-        });
+                "id": "<0123456789abcdef.0123456789abcdef@sandbox0123456789abcdef0123456789abcdef.mailgun.org>",
+                "message": "Queued. Thank you."
+            });
             let _m = mockito::mock("POST", uri.as_str())
                 .with_status(200)
                 .with_header("content-type", "application/json")
@@ -373,6 +373,5 @@ mod tests {
             let res = send_with_request_builder(request_builder, &creds, &sender, message).await;
             assert!(res.is_ok(), format!("{:?}", &res));
         }
-
     }
 }
