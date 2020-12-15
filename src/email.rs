@@ -4,8 +4,8 @@ use chrono::prelude::*;
 use reqwest;
 use std::collections::HashMap;
 
-use crate::{Credentials, MailgunResult, MAILGUN_API};
 pub use crate::EmailAddress;
+use crate::{Credentials, MailgunResult};
 
 ///! `Html` and `Text` emails use different API params
 pub enum MessageBody {
@@ -15,7 +15,9 @@ pub enum MessageBody {
 }
 
 impl Default for MessageBody {
-    fn default() -> MessageBody { MessageBody::Text(String::from("")) }
+    fn default() -> MessageBody {
+        MessageBody::Text(String::from(""))
+    }
 }
 
 impl MessageBody {
@@ -26,7 +28,7 @@ impl MessageBody {
             MessageBody::HtmlAndText(html, text) => {
                 params.insert(String::from("html"), html);
                 params.insert(String::from("text"), text)
-            },
+            }
         };
     }
 }
@@ -61,9 +63,14 @@ impl Message {
         params
     }
 
-    fn add_recipients(field: &str, addresses: Vec<EmailAddress>, params: &mut HashMap<String, String>) {
+    fn add_recipients(
+        field: &str,
+        addresses: Vec<EmailAddress>,
+        params: &mut HashMap<String, String>,
+    ) {
         if !addresses.is_empty() {
-            let joined = addresses.iter()
+            let joined = addresses
+                .iter()
                 .map(EmailAddress::to_string)
                 .collect::<Vec<String>>()
                 .join(",");
@@ -74,10 +81,10 @@ impl Message {
 
 ///! Some of the parameters exposed by the mailgun send API
 pub enum SendOptions {
-    TestMode, // o:testmode
+    TestMode,                    // o:testmode
     DeliveryTime(DateTime<Utc>), // o:deliverytime
-    Header(String, String), // h:X-My-Header
-    Tag(String), // o:tag
+    Header(String, String),      // h:X-My-Header
+    Tag(String),                 // o:tag
 }
 
 impl SendOptions {
@@ -89,7 +96,7 @@ impl SendOptions {
             Header(header, val) => {
                 let key = format!("h:{}", header);
                 (key, val.to_owned())
-            },
+            }
             Tag(tag) => (String::from("o:tag"), tag.to_owned()),
         };
         params.insert(key, value);
@@ -113,21 +120,35 @@ const MESSAGES_ENDPOINT: &str = "messages";
 //     -F text='Testing some Mailgun awesomeness!'
 /// Sends a single email from the specified sender address
 /// [API docs](https://documentation.mailgun.com/en/latest/api-sending.html#sending)
-pub fn send_email(creds: &Credentials, sender: &EmailAddress, msg: Message) ->  MailgunResult<SendResponse> {
+pub fn send_email(
+    creds: &Credentials,
+    sender: &EmailAddress,
+    msg: Message,
+) -> MailgunResult<SendResponse> {
     let client = reqwest::blocking::Client::new();
     send_with_client(&client, creds, sender, msg)
 }
 
 /// Same as `send_email` but with an externally managed client
-pub fn send_with_client(client: &reqwest::blocking::Client, creds: &Credentials, sender: &EmailAddress, msg: Message) -> MailgunResult<SendResponse> {
-    let url = format!("{}/{}/{}", MAILGUN_API, creds.domain, MESSAGES_ENDPOINT);
+pub fn send_with_client(
+    client: &reqwest::blocking::Client,
+    creds: &Credentials,
+    sender: &EmailAddress,
+    msg: Message,
+) -> MailgunResult<SendResponse> {
+    let url = format!("{}/{}/{}", creds.api_base, creds.domain, MESSAGES_ENDPOINT);
     let request_builder = client.post(&url);
     send_with_request_builder(request_builder, creds, sender, msg)
 }
 
 /// Same as `send_email` but with an externally managed request builder.
 /// Use this in case you want to send the mails to a custom API endpoint, e.g. for testing.
-pub fn send_with_request_builder(request_builder: reqwest::blocking::RequestBuilder, creds: &Credentials, sender: &EmailAddress, msg: Message) -> MailgunResult<SendResponse> {
+pub fn send_with_request_builder(
+    request_builder: reqwest::blocking::RequestBuilder,
+    creds: &Credentials,
+    sender: &EmailAddress,
+    msg: Message,
+) -> MailgunResult<SendResponse> {
     let mut params = msg.to_params();
     params.insert("from".to_string(), sender.to_string());
 
@@ -143,8 +164,8 @@ pub fn send_with_request_builder(request_builder: reqwest::blocking::RequestBuil
 
 #[cfg(test)]
 mod tests {
-    use reqwest::StatusCode;
     use super::*;
+    use reqwest::StatusCode;
     use serde_json::json;
 
     #[test]
@@ -161,7 +182,10 @@ mod tests {
             ..Default::default()
         };
         let params = html.to_params();
-        assert_eq!(params.get("html"), Some(&String::from("<body>hello, world</body>")));
+        assert_eq!(
+            params.get("html"),
+            Some(&String::from("<body>hello, world</body>"))
+        );
 
         let both = Message {
             body: MessageBody::HtmlAndText(String::from("<body/>"), String::from("hello")),
@@ -176,13 +200,19 @@ mod tests {
     fn message_recipients() {
         let msg = Message {
             to: vec![EmailAddress::address("foo@bar.com")],
-            cc: vec![EmailAddress::name_address("Tim", "woo@woah.com"), EmailAddress::address("z@c.c")],
+            cc: vec![
+                EmailAddress::name_address("Tim", "woo@woah.com"),
+                EmailAddress::address("z@c.c"),
+            ],
             ..Default::default()
         };
 
         let params = msg.to_params();
         assert_eq!(params.get("to"), Some(&String::from("foo@bar.com")));
-        assert_eq!(params.get("cc"), Some(&String::from("Tim <woo@woah.com>,z@c.c")));
+        assert_eq!(
+            params.get("cc"),
+            Some(&String::from("Tim <woo@woah.com>,z@c.c"))
+        );
         assert_eq!(params.get("bcc"), None);
     }
 
@@ -190,17 +220,20 @@ mod tests {
     fn send_options() {
         let msg = Message {
             options: vec![
-              SendOptions::TestMode,
-              SendOptions::DeliveryTime(Utc.timestamp_millis(1431648000)),
-              SendOptions::Header("X-For".to_owned(), "Fizz".to_owned()),
-              SendOptions::Tag("Important".to_owned()),
+                SendOptions::TestMode,
+                SendOptions::DeliveryTime(Utc.timestamp_millis(1431648000)),
+                SendOptions::Header("X-For".to_owned(), "Fizz".to_owned()),
+                SendOptions::Tag("Important".to_owned()),
             ],
             ..Default::default()
         };
 
         let params = msg.to_params();
         assert_eq!(params.get("o:testmode"), Some(&String::from("yes")));
-        assert_eq!(params.get("o:deliverytime"), Some(&String::from("Sat, 17 Jan 1970 13:40:48 +0000")));
+        assert_eq!(
+            params.get("o:deliverytime"),
+            Some(&String::from("Sat, 17 Jan 1970 13:40:48 +0000"))
+        );
         assert_eq!(params.get("h:X-For"), Some(&String::from("Fizz")));
         assert_eq!(params.get("o:tag"), Some(&String::from("Important")));
     }
@@ -236,7 +269,9 @@ mod tests {
         let message = Message {
             to: vec![recipient],
             subject: "Test email".to_string(),
-            body: MessageBody::Text(String::from("This email is from an mailgun_v3 automated test")),
+            body: MessageBody::Text(String::from(
+                "This email is from an mailgun_v3 automated test",
+            )),
             ..Default::default()
         };
         let sender = EmailAddress::name_address("Nick Testla", &format!("mailgun_v3@{}", &domain));
@@ -256,7 +291,9 @@ mod tests {
         let message = Message {
             to: vec![recipient],
             subject: "Test email".to_string(),
-            body: MessageBody::Text(String::from("This email is from an mailgun_v3 automated test")),
+            body: MessageBody::Text(String::from(
+                "This email is from an mailgun_v3 automated test",
+            )),
             ..Default::default()
         };
         let sender = EmailAddress::name_address("Nick Testla", &format!("mailgun_v3@{}", &domain));
@@ -303,7 +340,7 @@ pub mod async_impl {
         sender: &EmailAddress,
         msg: Message,
     ) -> MailgunResult<SendResponse> {
-        let url = format!("{}/{}/{}", MAILGUN_API, creds.domain, MESSAGES_ENDPOINT);
+        let url = format!("{}/{}/{}", creds.api_base, creds.domain, MESSAGES_ENDPOINT);
         let request_builder = client.post(&url);
         send_with_request_builder(request_builder, creds, sender, msg).await
     }

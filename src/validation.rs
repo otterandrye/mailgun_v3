@@ -3,7 +3,7 @@
 use reqwest;
 use std::collections::HashMap;
 
-use crate::{Credentials, MailgunResult, MAILGUN_API};
+use crate::{Credentials, MailgunResult};
 
 ///! Returned for sucessfully parsed email addresses
 #[derive(Deserialize, Debug)]
@@ -37,12 +37,17 @@ pub fn validate_email(creds: &Credentials, address: &str) -> MailgunResult<Valid
 }
 
 /// Same as `validate_email` but with an externally managed client
-pub fn validate_email_with_client(client: &reqwest::blocking::Client, creds: &Credentials, address: &str) -> MailgunResult<ValidationResponse> {
-    let url = format!("{}/{}", MAILGUN_API, VALIDATION_ENDPOINT);
+pub fn validate_email_with_client(
+    client: &reqwest::blocking::Client,
+    creds: &Credentials,
+    address: &str,
+) -> MailgunResult<ValidationResponse> {
+    let url = format!("{}/{}", creds.api_base, VALIDATION_ENDPOINT);
     let mut params = HashMap::new();
     params.insert("address".to_string(), address);
 
-    let res = client.get(&url)
+    let res = client
+        .get(&url)
         .basic_auth("api", Some(creds.api_key.clone()))
         .form(&params)
         .send()?
