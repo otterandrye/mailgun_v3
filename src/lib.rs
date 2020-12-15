@@ -26,16 +26,23 @@ pub struct Credentials {
 }
 
 impl Credentials {
-    pub fn new(api_key: &str, domain: &str) -> Self {
+    pub fn new<A: AsRef<str>, D: AsRef<str>>(api_key: A, domain: D) -> Self {
         Self::with_base(MAILGUN_DEFAULT_API, api_key, domain)
     }
-    pub fn with_base(api_base: &str, api_key: &str, domain: &str) -> Self {
+    pub fn with_base<B: AsRef<str>, A: AsRef<str>, D: AsRef<str>>(
+        api_base: B,
+        api_key: A,
+        domain: D,
+    ) -> Self {
+        let api_base = api_base.as_ref();
+        let api_key = api_key.as_ref();
+        let domain = domain.as_ref();
         assert!(
             api_base.starts_with("http"),
             "Domain does not start with http"
         );
         assert!(
-            api_base.chars().filter(|c| *c == '.') .count()>= 1,
+            api_base.chars().filter(|c| *c == '.').count() >= 1,
             "api_base does not contain any dots"
         );
         assert!(api_key.len() >= 50, "api_key is to short");

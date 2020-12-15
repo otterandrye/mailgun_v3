@@ -241,7 +241,10 @@ mod tests {
     #[test]
     fn request_unauthorized() {
         // invalid key & domain
-        let creds = Credentials::new("key-your_key_here", "aksdfa32undkjns.com");
+        let creds = Credentials::new(
+            "key-your_key_here_that-is-very-long_and-still-goes-on-and-on-and-on",
+            "aksdfa32undkjns.com",
+        );
         let recipient = EmailAddress::address("timmy@aksdfa32undkjns.com");
         let message = Message {
             to: vec![recipient],
