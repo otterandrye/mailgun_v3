@@ -41,11 +41,12 @@ pub struct Message {
     pub bcc: Vec<EmailAddress>,
     pub subject: String,
     pub body: MessageBody,
+    pub template: Option<String>,
     pub options: Vec<SendOptions>,
 }
 
 impl Message {
-    fn to_params(self) -> HashMap<String, String> {
+    fn into_params(self) -> HashMap<String, String> {
         let mut params = HashMap::new();
 
         Message::add_recipients("to", self.to, &mut params);
@@ -55,6 +56,10 @@ impl Message {
         params.insert(String::from("subject"), self.subject);
 
         self.body.add_to(&mut params);
+
+        if let Some(template) = self.template {
+            params.insert("template".to_string(), template);
+        }
 
         for opt in self.options {
             opt.add_to(&mut params);
@@ -149,7 +154,7 @@ pub fn send_with_request_builder(
     sender: &EmailAddress,
     msg: Message,
 ) -> MailgunResult<SendResponse> {
-    let mut params = msg.to_params();
+    let mut params = msg.into_params();
     params.insert("from".to_string(), sender.to_string());
 
     let res = request_builder
@@ -174,14 +179,14 @@ mod tests {
             body: MessageBody::Text(String::from("hello, world")),
             ..Default::default()
         };
-        let params = text.to_params();
+        let params = text.into_params();
         assert_eq!(params.get("text"), Some(&String::from("hello, world")));
 
         let html = Message {
             body: MessageBody::Html(String::from("<body>hello, world</body>")),
             ..Default::default()
         };
-        let params = html.to_params();
+        let params = html.into_params();
         assert_eq!(
             params.get("html"),
             Some(&String::from("<body>hello, world</body>"))
@@ -191,7 +196,7 @@ mod tests {
             body: MessageBody::HtmlAndText(String::from("<body/>"), String::from("hello")),
             ..Default::default()
         };
-        let params = both.to_params();
+        let params = both.into_params();
         assert_eq!(params.get("html"), Some(&String::from("<body/>")));
         assert_eq!(params.get("text"), Some(&String::from("hello")));
     }
@@ -207,7 +212,7 @@ mod tests {
             ..Default::default()
         };
 
-        let params = msg.to_params();
+        let params = msg.into_params();
         assert_eq!(params.get("to"), Some(&String::from("foo@bar.com")));
         assert_eq!(
             params.get("cc"),
@@ -228,7 +233,7 @@ mod tests {
             ..Default::default()
         };
 
-        let params = msg.to_params();
+        let params = msg.into_params();
         assert_eq!(params.get("o:testmode"), Some(&String::from("yes")));
         assert_eq!(
             params.get("o:deliverytime"),
@@ -356,7 +361,7 @@ pub mod async_impl {
         sender: &EmailAddress,
         msg: Message,
     ) -> MailgunResult<SendResponse> {
-        let mut params = msg.to_params();
+        let mut params = msg.into_params();
         params.insert("from".to_string(), sender.to_string());
 
         let res = request_builder
@@ -392,6 +397,31 @@ pub mod async_impl {
                 body: MessageBody::Text(String::from(
                     "This email is from an mailgun_v3 automated test",
                 )),
+                ..Default::default()
+            };
+            let sender =
+                EmailAddress::name_address("Nick Testla", &format!("mailgun_v3@{}", &domain));
+
+            let res = send_email(&creds, &sender, message).await;
+            assert!(res.is_ok(), format!("{:?}", &res));
+        }
+
+        #[ignore]
+        #[tokio::test]
+        async fn actually_send_email_template() {
+            let domain = "sandbox-some_numbers_here_probably.mailgun.org";
+            let key = "something-secret-something-safe";
+            let recipient = "foo@bar.com";
+
+            let creds = Credentials::new(&key, &domain);
+            let recipient = EmailAddress::address(&recipient);
+            let message = Message {
+                to: vec![recipient],
+                subject: "Test email".to_string(),
+                options: vec![
+                    SendOptions::Header("X-Mailgun-Variables".to_string(), "{\"test\": \"test\"}".to_string())
+                ],
+                template: Some("sometest".to_string()),
                 ..Default::default()
             };
             let sender =
