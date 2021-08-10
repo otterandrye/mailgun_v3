@@ -46,7 +46,7 @@ impl Credentials {
             api_base.chars().filter(|c| *c == '.').count() >= 1,
             "api_base does not contain any dots"
         );
-        assert!(api_key.len() >= 50, "api_key is to short");
+        assert!(api_key.len() >= 35, "api_key is to short");
         assert!(
             domain.chars().filter(|c| *c == '.').count() >= 1,
             "Domain does not contain any dots"
