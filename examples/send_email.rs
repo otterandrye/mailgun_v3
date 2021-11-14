@@ -4,7 +4,7 @@ use mailgun_v3::email::MessageBody;
 use mailgun_v3::Credentials;
 
 fn main(){
-    let both = Message {
+    let msg = Message {
         to: vec![EmailAddress::address("target@example.org")],
         body: MessageBody::Text("hello world".to_string()),
         subject: String::from("sample subject"),
@@ -15,6 +15,6 @@ fn main(){
         "key-abc1234567890",
         "example.org",
     );
-    let res = mailgun_v3::email::send_email(&creds, &sender, both);
+    let res = mailgun_v3::email::send_email(&creds, &sender, msg);
     println!("{:?}", res);
 }
