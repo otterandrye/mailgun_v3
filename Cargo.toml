@@ -15,7 +15,7 @@ travis-ci = { repository = "otterandrye/mailgun_v3", branch = "master" }
 
 [dependencies]
 chrono = "^0.4.19"
-reqwest = { version = "^0.11.2", features = ["json", "blocking"] }
+reqwest = { version = "^0.11.2", features = ["json", "blocking", "multipart"] }
 serde = "^1.0.125"
 serde_derive = "^1.0.125"
 serde_json = "^1.0.64"

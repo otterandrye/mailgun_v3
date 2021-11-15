@@ -43,25 +43,24 @@ pub struct Message {
     pub body: MessageBody,
     pub template: Option<String>,
     pub options: Vec<SendOptions>,
+    pub attachments: HashMap<String, Vec<u8>>,
 }
 
 impl Message {
-    fn into_params(self) -> HashMap<String, String> {
+    fn into_params(&self) -> HashMap<String, String> {
         let mut params = HashMap::new();
 
-        Message::add_recipients("to", self.to, &mut params);
-        Message::add_recipients("cc", self.cc, &mut params);
-        Message::add_recipients("bcc", self.bcc, &mut params);
+        Message::add_recipients("to", &self.to, &mut params);
+        Message::add_recipients("cc", &self.cc, &mut params);
+        Message::add_recipients("bcc", &self.bcc, &mut params);
 
-        params.insert(String::from("subject"), self.subject);
+        params.insert(String::from("subject"), self.subject.to_string());
 
-        self.body.add_to(&mut params);
-
-        if let Some(template) = self.template {
+        if let Some(template) = self.template.clone() {
             params.insert("template".to_string(), template);
         }
 
-        for opt in self.options {
+        for opt in &self.options {
             opt.add_to(&mut params);
         }
 
@@ -70,7 +69,7 @@ impl Message {
 
     fn add_recipients(
         field: &str,
-        addresses: Vec<EmailAddress>,
+        addresses: &Vec<EmailAddress>,
         params: &mut HashMap<String, String>,
     ) {
         if !addresses.is_empty() {
@@ -157,9 +156,19 @@ pub fn send_with_request_builder(
     let mut params = msg.into_params();
     params.insert("from".to_string(), sender.to_string());
 
+    let mut form = reqwest::blocking::multipart::Form::new();
+    for (key, value) in params {
+        form = form.text(key, value);
+    }
+    //add attachments
+    for (name,content) in msg.attachments.clone() {
+        let file_part = reqwest::blocking::multipart::Part::bytes(content).file_name(name.clone()).mime_str("application/octet-stream").unwrap();
+        form = form.part(name, file_part);
+    }
+
     let res = request_builder
         .basic_auth("api", Some(creds.api_key.clone()))
-        .form(&params)
+        .multipart(form)
         .send()?
         .error_for_status()?;
 
@@ -364,9 +373,19 @@ pub mod async_impl {
         let mut params = msg.into_params();
         params.insert("from".to_string(), sender.to_string());
 
+        let mut form = reqwest::multipart::Form::new();
+        for (key, value) in params {
+            form = form.text(key, value);
+        }
+        //add attachments
+        for (name,content) in msg.attachments.clone() {
+            let file_part = reqwest::multipart::Part::bytes(content).file_name(name.clone()).mime_str("application/octet-stream").unwrap();
+            form = form.part(name, file_part);
+        }
+            
         let res = request_builder
             .basic_auth("api", Some(creds.api_key.clone()))
-            .form(&params)
+            .multipart(form)
             .send()
             .await?
             .error_for_status()?;
