@@ -182,11 +182,9 @@ pub fn send_with_request_builder(
     }
     //add attachments
     for attachment in msg.attachments {
-        let name = attachment.name.clone();
         let file_part = reqwest::blocking::multipart::Part::bytes(attachment.content).file_name(attachment.name.clone()).mime_str(&attachment.mime_type).unwrap();
-        form = form.part(name, file_part);
+        form = form.part("attachment", file_part);
     }
-
     let res = request_builder
         .basic_auth("api", Some(creds.api_key.clone()))
         .multipart(form)
@@ -400,9 +398,8 @@ pub mod async_impl {
         }
         //add attachments
         for attachment in msg.attachments {
-            // let name = attachment.name.clone();
             let file_part = reqwest::multipart::Part::bytes(attachment.content).file_name(attachment.name.clone()).mime_str(&attachment.mime_type).unwrap();
-            form = form.part("abc123", file_part);
+            form = form.part("attachment", file_part);
         }
         //add message content
         match msg.body {
