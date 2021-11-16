@@ -44,6 +44,7 @@ pub struct Message {
     pub template: Option<String>,
     pub options: Vec<SendOptions>,
     pub attachments: Vec<Attachment>,
+    pub inline: Vec<Attachment>,
 }
 
 #[derive(Default)]
@@ -184,6 +185,11 @@ pub fn send_with_request_builder(
     for attachment in msg.attachments {
         let file_part = reqwest::blocking::multipart::Part::bytes(attachment.content).file_name(attachment.name.clone()).mime_str(&attachment.mime_type).unwrap();
         form = form.part("attachment", file_part);
+    }
+    //add inline files
+    for attachment in msg.inline {
+        let file_part = reqwest::blocking::multipart::Part::bytes(attachment.content).file_name(attachment.name.clone()).mime_str(&attachment.mime_type).unwrap();
+        form = form.part("inline", file_part);
     }
     let res = request_builder
         .basic_auth("api", Some(creds.api_key.clone()))
@@ -400,6 +406,11 @@ pub mod async_impl {
         for attachment in msg.attachments {
             let file_part = reqwest::multipart::Part::bytes(attachment.content).file_name(attachment.name.clone()).mime_str(&attachment.mime_type).unwrap();
             form = form.part("attachment", file_part);
+        }
+        //add inline files
+        for attachment in msg.inline {
+            let file_part = reqwest::multipart::Part::bytes(attachment.content).file_name(attachment.name.clone()).mime_str(&attachment.mime_type).unwrap();
+            form = form.part("inline", file_part);
         }
         //add message content
         match msg.body {
