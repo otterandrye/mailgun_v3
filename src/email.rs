@@ -43,7 +43,14 @@ pub struct Message {
     pub body: MessageBody,
     pub template: Option<String>,
     pub options: Vec<SendOptions>,
-    pub attachments: HashMap<String, Vec<u8>>,
+    pub attachments: Vec<Attachment>,
+}
+
+#[derive(Default)]
+pub struct Attachment {
+    pub name: String,
+    pub content: Vec<u8>,
+    pub mime_type: String,
 }
 
 impl Message {
@@ -161,8 +168,9 @@ pub fn send_with_request_builder(
         form = form.text(key, value);
     }
     //add attachments
-    for (name,content) in msg.attachments.clone() {
-        let file_part = reqwest::blocking::multipart::Part::bytes(content).file_name(name.clone()).mime_str("application/octet-stream").unwrap();
+    for attachment in msg.attachments {
+        let name = attachment.name.clone();
+        let file_part = reqwest::blocking::multipart::Part::bytes(attachment.content).file_name(attachment.name.clone()).mime_str(&attachment.mime_type).unwrap();
         form = form.part(name, file_part);
     }
 
@@ -378,8 +386,9 @@ pub mod async_impl {
             form = form.text(key, value);
         }
         //add attachments
-        for (name,content) in msg.attachments.clone() {
-            let file_part = reqwest::multipart::Part::bytes(content).file_name(name.clone()).mime_str("application/octet-stream").unwrap();
+        for attachment in msg.attachments {
+            let name = attachment.name.clone();
+            let file_part = reqwest::multipart::Part::bytes(attachment.content).file_name(attachment.name.clone()).mime_str(&attachment.mime_type).unwrap();
             form = form.part(name, file_part);
         }
             
