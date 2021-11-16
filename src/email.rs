@@ -387,9 +387,9 @@ pub mod async_impl {
         }
         //add attachments
         for attachment in msg.attachments {
-            let name = attachment.name.clone();
+            // let name = attachment.name.clone();
             let file_part = reqwest::multipart::Part::bytes(attachment.content).file_name(attachment.name.clone()).mime_str(&attachment.mime_type).unwrap();
-            form = form.part(name, file_part);
+            form = form.part("abc123", file_part);
         }
             
         let res = request_builder
