@@ -12,7 +12,7 @@ fn main(){
     };
     let sender = EmailAddress::address("sender@example.org");
     let creds = Credentials::with_base(
-        "http://api.eu.mailgun.net/v3",
+        "https://api.eu.mailgun.net/v3",
         "key-abc1234567890",
         "example.org",
     );
