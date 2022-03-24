@@ -1,6 +1,7 @@
 //! Send email through Mailgun
 
 use chrono::prelude::*;
+
 use reqwest;
 use std::collections::HashMap;
 
@@ -17,19 +18,6 @@ pub enum MessageBody {
 impl Default for MessageBody {
     fn default() -> MessageBody {
         MessageBody::Text(String::from(""))
-    }
-}
-
-impl MessageBody {
-    fn add_to(self, params: &mut HashMap<String, String>) {
-        match self {
-            MessageBody::Html(c) => params.insert(String::from("html"), c),
-            MessageBody::Text(c) => params.insert(String::from("text"), c),
-            MessageBody::HtmlAndText(html, text) => {
-                params.insert(String::from("html"), html);
-                params.insert(String::from("text"), text)
-            }
-        };
     }
 }
 
@@ -185,16 +173,14 @@ pub fn send_with_request_builder(
     for attachment in msg.attachments {
         let file_part = reqwest::blocking::multipart::Part::bytes(attachment.content)
             .file_name(attachment.name.clone())
-            .mime_str(&attachment.mime_type)
-            .unwrap();
+            .mime_str(&attachment.mime_type)?;
         form = form.part("attachment", file_part);
     }
     //add inline files
     for attachment in msg.inline {
         let file_part = reqwest::blocking::multipart::Part::bytes(attachment.content)
             .file_name(attachment.name.clone())
-            .mime_str(&attachment.mime_type)
-            .unwrap();
+            .mime_str(&attachment.mime_type)?;
         form = form.part("inline", file_part);
     }
     let res = request_builder
@@ -212,34 +198,6 @@ mod tests {
     use super::*;
     use reqwest::StatusCode;
     use serde_json::json;
-
-    #[test]
-    fn message_body() {
-        let text = Message {
-            body: MessageBody::Text(String::from("hello, world")),
-            ..Default::default()
-        };
-        let params = text.into_params();
-        assert_eq!(params.get("text"), Some(&String::from("hello, world")));
-
-        let html = Message {
-            body: MessageBody::Html(String::from("<body>hello, world</body>")),
-            ..Default::default()
-        };
-        let params = html.into_params();
-        assert_eq!(
-            params.get("html"),
-            Some(&String::from("<body>hello, world</body>"))
-        );
-
-        let both = Message {
-            body: MessageBody::HtmlAndText(String::from("<body/>"), String::from("hello")),
-            ..Default::default()
-        };
-        let params = both.into_params();
-        assert_eq!(params.get("html"), Some(&String::from("<body/>")));
-        assert_eq!(params.get("text"), Some(&String::from("hello")));
-    }
 
     #[test]
     fn message_recipients() {
@@ -412,16 +370,14 @@ pub mod async_impl {
         for attachment in msg.attachments {
             let file_part = reqwest::multipart::Part::bytes(attachment.content)
                 .file_name(attachment.name.clone())
-                .mime_str(&attachment.mime_type)
-                .unwrap();
+                .mime_str(&attachment.mime_type)?;
             form = form.part("attachment", file_part);
         }
         //add inline files
         for attachment in msg.inline {
             let file_part = reqwest::multipart::Part::bytes(attachment.content)
                 .file_name(attachment.name.clone())
-                .mime_str(&attachment.mime_type)
-                .unwrap();
+                .mime_str(&attachment.mime_type)?;
             form = form.part("inline", file_part);
         }
         //add message content
