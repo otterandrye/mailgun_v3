@@ -43,25 +43,32 @@ pub struct Message {
     pub body: MessageBody,
     pub template: Option<String>,
     pub options: Vec<SendOptions>,
+    pub attachments: Vec<Attachment>,
+    pub inline: Vec<Attachment>,
+}
+
+#[derive(Default)]
+pub struct Attachment {
+    pub name: String,
+    pub content: Vec<u8>,
+    pub mime_type: String,
 }
 
 impl Message {
-    fn into_params(self) -> HashMap<String, String> {
+    fn into_params(&self) -> HashMap<String, String> {
         let mut params = HashMap::new();
 
-        Message::add_recipients("to", self.to, &mut params);
-        Message::add_recipients("cc", self.cc, &mut params);
-        Message::add_recipients("bcc", self.bcc, &mut params);
+        Message::add_recipients("to", &self.to, &mut params);
+        Message::add_recipients("cc", &self.cc, &mut params);
+        Message::add_recipients("bcc", &self.bcc, &mut params);
 
-        params.insert(String::from("subject"), self.subject);
+        params.insert(String::from("subject"), self.subject.to_string());
 
-        self.body.add_to(&mut params);
-
-        if let Some(template) = self.template {
+        if let Some(template) = self.template.clone() {
             params.insert("template".to_string(), template);
         }
 
-        for opt in self.options {
+        for opt in &self.options {
             opt.add_to(&mut params);
         }
 
@@ -70,7 +77,7 @@ impl Message {
 
     fn add_recipients(
         field: &str,
-        addresses: Vec<EmailAddress>,
+        addresses: &Vec<EmailAddress>,
         params: &mut HashMap<String, String>,
     ) {
         if !addresses.is_empty() {
@@ -157,9 +164,36 @@ pub fn send_with_request_builder(
     let mut params = msg.into_params();
     params.insert("from".to_string(), sender.to_string());
 
+    let mut form = reqwest::blocking::multipart::Form::new();
+    for (key, value) in params {
+        form = form.text(key, value);
+    }
+    //add message content
+    match msg.body {
+        MessageBody::Text(text) => {
+            form = form.text("text", text);
+        }
+        MessageBody::Html(html) => {
+            form = form.text("html", html);
+        }
+        MessageBody::HtmlAndText(html, text) => {
+            form = form.text("text", text);
+            form = form.text("html", html);
+        }
+    }
+    //add attachments
+    for attachment in msg.attachments {
+        let file_part = reqwest::blocking::multipart::Part::bytes(attachment.content).file_name(attachment.name.clone()).mime_str(&attachment.mime_type).unwrap();
+        form = form.part("attachment", file_part);
+    }
+    //add inline files
+    for attachment in msg.inline {
+        let file_part = reqwest::blocking::multipart::Part::bytes(attachment.content).file_name(attachment.name.clone()).mime_str(&attachment.mime_type).unwrap();
+        form = form.part("inline", file_part);
+    }
     let res = request_builder
         .basic_auth("api", Some(creds.api_key.clone()))
-        .form(&params)
+        .multipart(form)
         .send()?
         .error_for_status()?;
 
@@ -364,9 +398,37 @@ pub mod async_impl {
         let mut params = msg.into_params();
         params.insert("from".to_string(), sender.to_string());
 
+        let mut form = reqwest::multipart::Form::new();
+        for (key, value) in params {
+            form = form.text(key, value);
+        }
+        //add attachments
+        for attachment in msg.attachments {
+            let file_part = reqwest::multipart::Part::bytes(attachment.content).file_name(attachment.name.clone()).mime_str(&attachment.mime_type).unwrap();
+            form = form.part("attachment", file_part);
+        }
+        //add inline files
+        for attachment in msg.inline {
+            let file_part = reqwest::multipart::Part::bytes(attachment.content).file_name(attachment.name.clone()).mime_str(&attachment.mime_type).unwrap();
+            form = form.part("inline", file_part);
+        }
+        //add message content
+        match msg.body {
+            MessageBody::Text(text) => {
+                form = form.text("text", text);
+            }
+            MessageBody::Html(html) => {
+                form = form.text("html", html);
+            }
+            MessageBody::HtmlAndText(html, text) => {
+                form = form.text("text", text);
+                form = form.text("html", html);
+            }
+        }
+
         let res = request_builder
             .basic_auth("api", Some(creds.api_key.clone()))
-            .form(&params)
+            .multipart(form)
             .send()
             .await?
             .error_for_status()?;
