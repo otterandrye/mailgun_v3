@@ -183,12 +183,18 @@ pub fn send_with_request_builder(
     }
     //add attachments
     for attachment in msg.attachments {
-        let file_part = reqwest::blocking::multipart::Part::bytes(attachment.content).file_name(attachment.name.clone()).mime_str(&attachment.mime_type).unwrap();
+        let file_part = reqwest::blocking::multipart::Part::bytes(attachment.content)
+            .file_name(attachment.name.clone())
+            .mime_str(&attachment.mime_type)
+            .unwrap();
         form = form.part("attachment", file_part);
     }
     //add inline files
     for attachment in msg.inline {
-        let file_part = reqwest::blocking::multipart::Part::bytes(attachment.content).file_name(attachment.name.clone()).mime_str(&attachment.mime_type).unwrap();
+        let file_part = reqwest::blocking::multipart::Part::bytes(attachment.content)
+            .file_name(attachment.name.clone())
+            .mime_str(&attachment.mime_type)
+            .unwrap();
         form = form.part("inline", file_part);
     }
     let res = request_builder
@@ -319,7 +325,7 @@ mod tests {
         let sender = EmailAddress::name_address("Nick Testla", &format!("mailgun_v3@{}", &domain));
 
         let res = send_email(&creds, &sender, message);
-        assert!(res.is_ok(), format!("{:?}", &res));
+        assert!(res.is_ok(), "{:?}", &res);
     }
 
     #[test]
@@ -357,7 +363,7 @@ mod tests {
         let client = reqwest::blocking::Client::new();
         let request_builder = client.post(&url);
         let res = send_with_request_builder(request_builder, &creds, &sender, message);
-        assert!(res.is_ok(), format!("{:?}", &res));
+        assert!(res.is_ok(), "{:?}", &res);
     }
 }
 
@@ -404,12 +410,18 @@ pub mod async_impl {
         }
         //add attachments
         for attachment in msg.attachments {
-            let file_part = reqwest::multipart::Part::bytes(attachment.content).file_name(attachment.name.clone()).mime_str(&attachment.mime_type).unwrap();
+            let file_part = reqwest::multipart::Part::bytes(attachment.content)
+                .file_name(attachment.name.clone())
+                .mime_str(&attachment.mime_type)
+                .unwrap();
             form = form.part("attachment", file_part);
         }
         //add inline files
         for attachment in msg.inline {
-            let file_part = reqwest::multipart::Part::bytes(attachment.content).file_name(attachment.name.clone()).mime_str(&attachment.mime_type).unwrap();
+            let file_part = reqwest::multipart::Part::bytes(attachment.content)
+                .file_name(attachment.name.clone())
+                .mime_str(&attachment.mime_type)
+                .unwrap();
             form = form.part("inline", file_part);
         }
         //add message content
@@ -465,7 +477,7 @@ pub mod async_impl {
                 EmailAddress::name_address("Nick Testla", &format!("mailgun_v3@{}", &domain));
 
             let res = send_email(&creds, &sender, message).await;
-            assert!(res.is_ok(), format!("{:?}", &res));
+            assert!(res.is_ok(), "{:?}", &res);
         }
 
         #[ignore]
@@ -480,9 +492,10 @@ pub mod async_impl {
             let message = Message {
                 to: vec![recipient],
                 subject: "Test email".to_string(),
-                options: vec![
-                    SendOptions::Header("X-Mailgun-Variables".to_string(), "{\"test\": \"test\"}".to_string())
-                ],
+                options: vec![SendOptions::Header(
+                    "X-Mailgun-Variables".to_string(),
+                    "{\"test\": \"test\"}".to_string(),
+                )],
                 template: Some("sometest".to_string()),
                 ..Default::default()
             };
@@ -490,7 +503,7 @@ pub mod async_impl {
                 EmailAddress::name_address("Nick Testla", &format!("mailgun_v3@{}", &domain));
 
             let res = send_email(&creds, &sender, message).await;
-            assert!(res.is_ok(), format!("{:?}", &res));
+            assert!(res.is_ok(), "{:?}", &res);
         }
 
         #[tokio::test]
@@ -529,7 +542,7 @@ pub mod async_impl {
             let client = reqwest::Client::new();
             let request_builder = client.post(&url);
             let res = send_with_request_builder(request_builder, &creds, &sender, message).await;
-            assert!(res.is_ok(), format!("{:?}", &res));
+            assert!(res.is_ok(), "{:?}", &res);
         }
     }
 }

@@ -69,7 +69,7 @@ mod tests {
         let creds = Credentials::new(&key, "not needed");
 
         let res = validate_email(&creds, "james.earl.jones@gmail.com");
-        assert!(res.is_ok(), format!("{:?}", &res));
+        assert!(res.is_ok(), "{:?}", &res);
         let parsed = res.unwrap();
         print!("got response: {:?}", parsed);
         assert_eq!(parsed.address, "james.earl.jones@gmail.com");
