@@ -11,6 +11,8 @@ extern crate serde_derive;
 pub mod email;
 pub mod validation;
 
+use std::fmt;
+
 pub use reqwest::Error as ReqError;
 
 const MAILGUN_DEFAULT_API: &str = "https://api.mailgun.net/v3";
@@ -87,11 +89,13 @@ impl EmailAddress {
     pub fn email(&self) -> &str {
         &self.address
     }
+}
 
-    pub fn to_string(&self) -> String {
+impl fmt::Display for EmailAddress {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.name {
-            Some(ref name) => format!("{} <{}>", name, self.address),
-            None => self.address.clone(),
+            Some(ref name) => write!(f, "{} <{}>", name, self.address),
+            None => write!(f, "{}", self.address.clone()),
         }
     }
 }

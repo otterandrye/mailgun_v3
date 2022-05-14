@@ -43,7 +43,7 @@ pub struct Attachment {
 }
 
 impl Message {
-    fn into_params(&self) -> HashMap<String, String> {
+    fn params(&self) -> HashMap<String, String> {
         let mut params = HashMap::new();
 
         Message::add_recipients("to", &self.to, &mut params);
@@ -65,7 +65,7 @@ impl Message {
 
     fn add_recipients(
         field: &str,
-        addresses: &Vec<EmailAddress>,
+        addresses: &[EmailAddress],
         params: &mut HashMap<String, String>,
     ) {
         if !addresses.is_empty() {
@@ -149,7 +149,7 @@ pub fn send_with_request_builder(
     sender: &EmailAddress,
     msg: Message,
 ) -> MailgunResult<SendResponse> {
-    let mut params = msg.into_params();
+    let mut params = msg.params();
     params.insert("from".to_string(), sender.to_string());
 
     let mut form = reqwest::blocking::multipart::Form::new();
@@ -210,7 +210,7 @@ mod tests {
             ..Default::default()
         };
 
-        let params = msg.into_params();
+        let params = msg.params();
         assert_eq!(params.get("to"), Some(&String::from("foo@bar.com")));
         assert_eq!(
             params.get("cc"),
@@ -231,7 +231,7 @@ mod tests {
             ..Default::default()
         };
 
-        let params = msg.into_params();
+        let params = msg.params();
         assert_eq!(params.get("o:testmode"), Some(&String::from("yes")));
         assert_eq!(
             params.get("o:deliverytime"),
@@ -359,7 +359,7 @@ pub mod async_impl {
         sender: &EmailAddress,
         msg: Message,
     ) -> MailgunResult<SendResponse> {
-        let mut params = msg.into_params();
+        let mut params = msg.params();
         params.insert("from".to_string(), sender.to_string());
 
         let mut form = reqwest::multipart::Form::new();
