@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use crate::{Credentials, MailgunResult};
 
 ///! Returned for sucessfully parsed email addresses
+#[allow(unused)]
 #[derive(Deserialize, Debug)]
 pub struct EmailParts {
     domain: String,
