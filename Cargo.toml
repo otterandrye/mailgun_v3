@@ -8,13 +8,13 @@ version = "0.12.0"
 authors = ["Nathan Merritt <nathan@gnmerritt.net>"]
 keywords = ["mailgun", "reqwest", "email", "api"]
 categories = ["api-bindings"]
-edition = "2018"
+edition = "2021"
 
 [badges]
 travis-ci = { repository = "otterandrye/mailgun_v3", branch = "master" }
 
 [dependencies]
-chrono = "^0.4.19"
+chrono = { version = "^0.4.19", default-features = false, features = ["clock"] }
 reqwest = { version = "^0.11.2", features = ["json", "blocking", "multipart"] }
 serde = "^1.0.125"
 serde_derive = "^1.0.125"
