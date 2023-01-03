@@ -48,7 +48,7 @@ pub fn validate_email_with_client(
     params.insert("address".to_string(), address);
 
     let res = client
-        .get(&url)
+        .get(url)
         .basic_auth("api", Some(creds.api_key.clone()))
         .form(&params)
         .send()?

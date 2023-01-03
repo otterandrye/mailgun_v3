@@ -1,9 +1,9 @@
-use mailgun_v3::email::Message;
 use mailgun_v3::email::EmailAddress;
+use mailgun_v3::email::Message;
 use mailgun_v3::email::MessageBody;
 use mailgun_v3::Credentials;
 
-fn main(){
+fn main() {
     let msg = Message {
         to: vec![EmailAddress::address("target@example.org")],
         body: MessageBody::Text("hello world".to_string()),
