@@ -137,7 +137,7 @@ pub fn send_with_client(
     msg: Message,
 ) -> MailgunResult<SendResponse> {
     let url = format!("{}/{}/{}", creds.api_base, creds.domain, MESSAGES_ENDPOINT);
-    let request_builder = client.post(&url);
+    let request_builder = client.post(url);
     send_with_request_builder(request_builder, creds, sender, msg)
 }
 
@@ -224,7 +224,7 @@ mod tests {
         let msg = Message {
             options: vec![
                 SendOptions::TestMode,
-                SendOptions::DeliveryTime(Utc.timestamp_millis(1431648000)),
+                SendOptions::DeliveryTime(Utc.timestamp_millis_opt(1431648000).unwrap()),
                 SendOptions::Header("X-For".to_owned(), "Fizz".to_owned()),
                 SendOptions::Tag("Important".to_owned()),
             ],

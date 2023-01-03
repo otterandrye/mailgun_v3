@@ -17,9 +17,7 @@ https://docs.rs/mailgun_v3/latest/mailgun_v3/
 Sending an email
 
 ```rust
-use mailgun_v3::email::Message;
-use mailgun_v3::email::EmailAddress;
-use mailgun_v3::email::MessageBody;
+use mailgun_v3::email::{Message, EmailAddress, MessageBody};
 use mailgun_v3::Credentials;
 
 fn main(){
