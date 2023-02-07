@@ -10,6 +10,7 @@ extern crate serde_derive;
 
 pub mod email;
 pub mod validation;
+pub mod templates;
 
 use std::fmt;
 
